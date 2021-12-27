@@ -1,0 +1,31 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`queries User 1`] = `
+Object {
+  "data": null,
+  "errors": Array [
+    [GraphQLError: not authorized],
+  ],
+  "extensions": undefined,
+  "http": Object {
+    "headers": Headers {
+      Symbol(map): Object {},
+    },
+  },
+}
+`;
+
+exports[`queries allusers 1`] = `
+Object {
+  "data": null,
+  "errors": Array [
+    [GraphQLError: Cannot read properties of undefined (reading 'User')],
+  ],
+  "extensions": undefined,
+  "http": Object {
+    "headers": Headers {
+      Symbol(map): Object {},
+    },
+  },
+}
+`;
