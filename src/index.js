@@ -4,7 +4,7 @@ const express = require("express")
 const {execute, subscribe} = require("graphql")
 const { ApolloServer } = require("apollo-server-express");
 const { makeExecutableSchema } = require('@graphql-tools/schema');
-const {PubSub} = require("graphql-subscriptions")
+
 const { SubscriptionServer } = require('subscriptions-transport-ws');
 
 // imported Function Local
@@ -22,7 +22,7 @@ const { getUserId, createToken } = require("./auth")
 // Instance
 const app = express();
 const httpServer = createServer(app);
-const pubsub = new PubSub();
+
 
 // Aplicando Directivas
 let schema = makeExecutableSchema({ typeDefs, resolvers });
@@ -35,18 +35,16 @@ const subscriptionServer = SubscriptionServer.create({
   schema,
   execute,
   subscribe,
-  async onConnect({req}) {
+  async onConnect({connection}) {
     // If an object is returned here, it will be passed as the `context`
     // argument to your subscription resolvers.
-    const token = req.headers.authorization || '';
-    const user = getUserId(token);
-    return {...req, models, user, pubsub, createToken}
+    return { models, createToken}
   }
 }, {
   // This is the `httpServer` we created in a previous step.
   server: httpServer,
   // This `server` is the instance returned from `new ApolloServer`.
-  path: '/subs',
+  path: '/graphql',
 })
 
 // Ejecutando el servidor con Directivas
@@ -59,7 +57,7 @@ const server = new ApolloServer({
   context ({ req }) {
     const token = req.headers.authorization || '';
     const user = getUserId(token);
-    return {...req, models, user, pubsub, createToken}
+    return {...req, models, user, createToken}
   },
   plugins: [{
     async serverWillStart() {

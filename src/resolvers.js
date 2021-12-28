@@ -2,7 +2,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { authenticated, authorized, APP_SECRET } = require("./auth")
 const {constants} = require("./constants")
-// const { Op } = require("sequelize")
+const {PubSub} = require("graphql-subscriptions")
+const pubsub = new PubSub();
 
 module.exports = {
   resolvers: {
@@ -66,18 +67,17 @@ module.exports = {
           throw new Error(error)
         }
       },
-      createitem: async (_, {task}, {models, pubsub}) => {
+      createitem: async (_, {task}, {models}) => {
         try {
           
           const newTask = models.Task.create({
             taskName: task
           })
 
-          console.log(pubsub)
+          let dataValue = newTask.then(s => s.toJSON().taskName);
 
-          pubsub.publish(constants.NEW_TASK, newTask);
-          return newTask;
-
+          console.log(dataValue)
+          return;
         } catch (error) {
           throw new Error(error);
         }
@@ -88,7 +88,7 @@ module.exports = {
     Subscription: {
       newTask: {
         suscribe: async (parent, args, context) => {
-          return context.pubsub.asyncIterator(constants.NEW_TASK)
+          return pubsub.asyncIterator(constants.NEW_TASK)
         },
         resolve: payload => { return payload }
       }
