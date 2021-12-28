@@ -61,12 +61,12 @@ const AuthorizedDirective = (schema, directiveName) => {
         fieldConfig.resolve = async function (root, args, context, info) {
           const {role} = args;
 
-          console.log('context:: ', context.user
+          /*console.log('context:: ', context.user
           .then(res => res.json())
           .then(value => {
             console.log('erwinValue: ',value)
-          })  )
-          console.log('args:: ',args);
+          })  )*/
+
           if (context.user.role !== role) {
             throw new Error(`Must by a ${role} bruth`)
           }
@@ -79,6 +79,7 @@ const AuthorizedDirective = (schema, directiveName) => {
 }
 
  // https://github.com/erwin261996/testgraphql.git
+ // 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 (28/12/2021 hasta en 7 dias)
 
 module.exports = {
   UpperDirectiveTransformer,

@@ -1,14 +1,16 @@
+// Imported
+const {createServer} = require('http');
 const express = require("express")
-const {
-  ApolloServer,
-  AuthenticationError,
-  UserInputError,
-  ApolloError
-} = require("apollo-server-express");
+const {execute, subscribe} = require("graphql")
+const { ApolloServer } = require("apollo-server-express");
 const { makeExecutableSchema } = require('@graphql-tools/schema');
+const {PubSub} = require("graphql-subscriptions")
+const { SubscriptionServer } = require('subscriptions-transport-ws');
 
+// imported Function Local
 const { typeDefs } = require("./schema")
 const { resolvers } = require("./resolvers")
+
 const {
   UpperDirectiveTransformer,
   AuthenticatedDirective,
@@ -17,11 +19,35 @@ const {
 const models = require("../models")
 const { getUserId, createToken } = require("./auth")
 
+// Instance
+const app = express();
+const httpServer = createServer(app);
+const pubsub = new PubSub();
+
 // Aplicando Directivas
 let schema = makeExecutableSchema({ typeDefs, resolvers });
 schema = UpperDirectiveTransformer(schema, 'upper');
 schema = AuthenticatedDirective(schema, 'authenticated');
 schema = AuthorizedDirective(schema, 'authorized');
+
+// Creating a Subscriptions Server
+const subscriptionServer = SubscriptionServer.create({
+  schema,
+  execute,
+  subscribe,
+  async onConnect({req}) {
+    // If an object is returned here, it will be passed as the `context`
+    // argument to your subscription resolvers.
+    const token = req.headers.authorization || '';
+    const user = getUserId(token);
+    return {...req, models, user, pubsub, createToken}
+  }
+}, {
+  // This is the `httpServer` we created in a previous step.
+  server: httpServer,
+  // This `server` is the instance returned from `new ApolloServer`.
+  path: '/subs',
+})
 
 // Ejecutando el servidor con Directivas
 const server = new ApolloServer({
@@ -30,19 +56,28 @@ const server = new ApolloServer({
     console.log(e)
     return new Error("wrong fields")
   },*/
-  context ({ req }) {   
+  context ({ req }) {
     const token = req.headers.authorization || '';
     const user = getUserId(token);
-    return {...req, models, user, createToken}
-  }
-});  
-const app = express();
+    return {...req, models, user, pubsub, createToken}
+  },
+  plugins: [{
+    async serverWillStart() {
+      return {
+        async drainServer() {
+          subscriptionServer.close();
+        }
+      }
+    }
+  }]
+});
 
 server.start().then(res => {
   const PORT = 4000;
-  server.applyMiddleware({ app });    
-  app.listen(PORT, () => {
-    console.log(`🚀 Server is running at ${ PORT }`)
+  server.applyMiddleware({ app });
+
+  httpServer.listen(PORT, () => {
+    console.log(`Server ready at ${PORT}`);
   })
 });
 

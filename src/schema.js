@@ -30,6 +30,10 @@ const typeDefs = gql `
     updatedAt: String
   }
 
+  type Task {
+    task: String!
+  }
+
   #Query
   type Query {
     hello: String!,
@@ -41,7 +45,12 @@ const typeDefs = gql `
   type Mutation {
     signup(firstName: String!, lastName: String!,
                email: String!, password:String!, userName:String!, role: String!): User!,               
-    signin(email: String!, password: String!): AutoPayLoad
+    signin(email: String!, password: String!): AutoPayLoad,
+    createitem(task: String!): Task!
+  }
+
+  type Subscription {
+    newTask: Task
   }
 `;
 

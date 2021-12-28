@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { authenticated, authorized, APP_SECRET } = require("./auth")
+const {constants} = require("./constants")
 // const { Op } = require("sequelize")
 
 module.exports = {
@@ -64,6 +65,32 @@ module.exports = {
         } catch (error) {
           throw new Error(error)
         }
+      },
+      createitem: async (_, {task}, {models, pubsub}) => {
+        try {
+          
+          const newTask = models.Task.create({
+            taskName: task
+          })
+
+          console.log(pubsub)
+
+          pubsub.publish(constants.NEW_TASK, newTask);
+          return newTask;
+
+        } catch (error) {
+          throw new Error(error);
+        }
+      }
+    },
+
+    // Subscription
+    Subscription: {
+      newTask: {
+        suscribe: async (parent, args, context) => {
+          return context.pubsub.asyncIterator(constants.NEW_TASK)
+        },
+        resolve: payload => { return payload }
       }
     }
   }
