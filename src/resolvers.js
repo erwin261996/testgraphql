@@ -25,6 +25,14 @@ module.exports = {
       }),
       allusers: async (root, args, { models }) => {
         return await models.User.findAll();
+      },
+      newTask: async (root, args, { models }) => {
+        let dataValue = await models.Task.findAll({ raw: true, nest: true, });
+        return [...dataValue].map(s => {
+          return {
+            title: s.taskName
+          }
+        });
       }
     },
     // Mutations
@@ -69,15 +77,14 @@ module.exports = {
       },
       createitem: async (_, {task}, {models}) => {
         try {
-          
-          const newTask = models.Task.create({
+          const resultado = (await models.Task.create({
             taskName: task
-          })
+          })).get({plain:true})
 
-          let dataValue = newTask.then(s => s.toJSON().taskName);
-
-          console.log(dataValue)
-          return;
+          pubsub.publish(constants.NEW_TASK, { 
+            title: resultado.taskName 
+          });
+          return { title: resultado.taskName };
         } catch (error) {
           throw new Error(error);
         }
@@ -87,10 +94,8 @@ module.exports = {
     // Subscription
     Subscription: {
       newTask: {
-        suscribe: async (parent, args, context) => {
-          return pubsub.asyncIterator(constants.NEW_TASK)
-        },
-        resolve: payload => { return payload }
+        subscribe: () => pubsub.asyncIterator([constants.NEW_TASK]),
+        resolve: (payload) => { return payload }
       }
     }
   }

@@ -38,7 +38,7 @@ const subscriptionServer = SubscriptionServer.create({
   async onConnect({connection}) {
     // If an object is returned here, it will be passed as the `context`
     // argument to your subscription resolvers.
-    return { models, createToken}
+    return { ...connection, models, createToken}
   }
 }, {
   // This is the `httpServer` we created in a previous step.

@@ -31,14 +31,15 @@ const typeDefs = gql `
   }
 
   type Task {
-    task: String!
+    title: String!
   }
 
   #Query
   type Query {
     hello: String!,
     users: [User!]! @authenticated,
-    allusers: [User!]! @authenticated @authorized(role: ADMIN)
+    allusers: [User!]! @authenticated @authorized(role: ADMIN),
+    newTask: [Task]
   }
 
   #Mutation
